@@ -278,8 +278,6 @@ class _ProfilePage extends State<AuthService> {
   User? user = FirebaseAuth.instance.currentUser;
   final TextEditingController _changedController = TextEditingController();
   final GlobalKey<FormState> _changedKey = GlobalKey<FormState>();
-
-
   Widget _welcomeInfo() {
     return Text("Welcome, ${user!.email}");
   }
@@ -291,73 +289,44 @@ class _ProfilePage extends State<AuthService> {
   }
 
   void _changePassword() {
-    showModalBottomSheet<void>(
-            context: context,
-            builder: (BuildContext context) {
-              return Container(
-                height: 300,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      /*TextFormField(
-                        controller: _changedController,
-                        decoration: InputDecoration(labelText: 'New Password'),
-                      ),
-                      ElevatedButton(
-                        child: const Text('Confirm'),
-                        onPressed: () => {
-                          /*if (_changedController.text.isEmpty) {
-                            AlertDialog(
-                              title: Text('Please enter a new password')
-                            )
-                          },*/
-                          Navigator.pop(context),
-                        },
-                      ),*/
-                      Form(
-                        key: _changedKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Container(
-                              child: Text('Change your password'),
-                              padding: const EdgeInsets.all(16),
-                              alignment: Alignment.center,
-                            ),
-                            TextFormField(
-                              controller: _changedController,
-                              decoration: InputDecoration(labelText: 'New Password'),
-                              validator: (value) {
-                                if (value?.isEmpty??true) {
-                                  return 'Please enter some text';
-                                }
-                                return null;
-                              },
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16.0),
-                              alignment: Alignment.center,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (_changedKey.currentState!.validate()) {
-                                    //_changePassword();
-                                    print("hey");
-                                  }
-                                },
-                                child: Text('Confirm'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        String errorMessage = " ";
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            return Container(
+              height: 300,
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _changedController,
+                    decoration: InputDecoration(labelText: "New Password"),
                   ),
-                ),
-              );
-            },
-          );
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await user?.updatePassword(_changedController.text);
+                        modalSetState(() {
+                          errorMessage = "Successfully changed password";
+                        });
+                      } catch (e) {
+                        modalSetState(() {
+                          errorMessage = e.toString();
+                        });
+                      }
+                    },
+                    child: Text("Confirm"),
+                  ),
+                  Text(errorMessage),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _signOut() async {
