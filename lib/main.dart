@@ -87,6 +87,7 @@ class _RegisterEmailSectionState extends State<RegisterEmailSection> {
         _userEmail = _emailController.text;
         _initialState = false;
       });
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => AuthService(auth: widget.auth)),
@@ -191,6 +192,10 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
         _userEmail = _emailController.text;
         _initialState = false;
       });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AuthService(auth: widget.auth)),
+      );
     } catch (e) {
       setState(() {
         _success = false;
@@ -266,16 +271,108 @@ class AuthService extends StatefulWidget{
   final FirebaseAuth auth;
 
   @override
-  _AuthServiceState createState() => _AuthServiceState();
+  _ProfilePage createState() => _ProfilePage();
 }
 
-class _AuthServiceState extends State<AuthService> {
+class _ProfilePage extends State<AuthService> {
+  User? user = FirebaseAuth.instance.currentUser;
+  final TextEditingController _changedController = TextEditingController();
+  final GlobalKey<FormState> _changedKey = GlobalKey<FormState>();
+
+
+  Widget _welcomeInfo() {
+    return Text("Welcome, ${user!.email}");
+  }
+  Widget _passButton() {
+    return ElevatedButton(
+      onPressed: () => _changePassword(),
+      child: Text("Change Password"),
+    );
+  }
+
+  void _changePassword() {
+    showModalBottomSheet<void>(
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                height: 300,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      /*TextFormField(
+                        controller: _changedController,
+                        decoration: InputDecoration(labelText: 'New Password'),
+                      ),
+                      ElevatedButton(
+                        child: const Text('Confirm'),
+                        onPressed: () => {
+                          /*if (_changedController.text.isEmpty) {
+                            AlertDialog(
+                              title: Text('Please enter a new password')
+                            )
+                          },*/
+                          Navigator.pop(context),
+                        },
+                      ),*/
+                      Form(
+                        key: _changedKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              child: Text('Change your password'),
+                              padding: const EdgeInsets.all(16),
+                              alignment: Alignment.center,
+                            ),
+                            TextFormField(
+                              controller: _changedController,
+                              decoration: InputDecoration(labelText: 'New Password'),
+                              validator: (value) {
+                                if (value?.isEmpty??true) {
+                                  return 'Please enter some text';
+                                }
+                                return null;
+                              },
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              alignment: Alignment.center,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (_changedKey.currentState!.validate()) {
+                                    //_changePassword();
+                                    print("hey");
+                                  }
+                                },
+                                child: Text('Confirm'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
   void _signOut() async {
     await widget.auth.signOut();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Signed out successfully'),
+      content: Text('Sign out in progress...'),
     ));
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => MyHomePage(title: 'Firebase Auth Demo')),
+      (route) => false,
+    );
   }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -295,7 +392,8 @@ class _AuthServiceState extends State<AuthService> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text("Welcome, "),
+            _welcomeInfo(),
+            _passButton(),
           ],
         ),
       ),
